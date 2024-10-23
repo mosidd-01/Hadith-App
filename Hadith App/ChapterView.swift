@@ -66,7 +66,7 @@ struct ChapterView: SwiftUI.View {
                                                 .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                                 .frame(width: 50, alignment: .leading)
                                             
-                                            Text(chapter.name)
+                                            Text(chapter.name.trimmingCharacters(in: .whitespaces))
                                                 .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                         }

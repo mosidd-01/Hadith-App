@@ -90,11 +90,12 @@ struct ContentView: SwiftUI.View {
                                                 .cornerRadius(10)
                                             )
                                         }
-                                        .padding(.horizontal)
+                                        .buttonStyle(PlainButtonStyle())
                                     }
                                 }
                                 .padding(.horizontal)
                             }
+                            .background(Color(red: 40/255, green: 40/255, blue: 40/255))
                         }
                         .background(Color(red: 40/255, green: 40/255, blue: 40/255))
                     }

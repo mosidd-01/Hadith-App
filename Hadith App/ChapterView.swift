@@ -54,21 +54,24 @@ struct ChapterView: SwiftUI.View {
                     ScrollView {
                         VStack(spacing: 12) {
                             ForEach(chapters, id: \.number) { chapter in
-                                Button(action: {
-                                    print("Selected chapter: \(chapter.name)")
-                                }) {
+                                NavigationLink(destination: HadithsView(
+                                    bookName: bookName,
+                                    chapterName: chapter.name,
+                                    chapterNumber: chapter.number,
+                                    hadithRange: chapter.range
+                                )) {
                                     VStack(alignment: .leading, spacing: 8) {
                                         HStack {
                                             Text(chapter.number)
                                                 .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                                 .frame(width: 50, alignment: .leading)
                                             
-                                            Text(chapter.name.trimmingCharacters(in: .whitespaces))
+                                            Text(chapter.name)
                                                 .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                         }
                                         
-                                        Text("Ahaadith: \(chapter.range)")
+                                        Text("Hadith: \(chapter.range)")
                                             .font(.caption)
                                             .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -83,6 +86,7 @@ struct ChapterView: SwiftUI.View {
                                     )
                                     .cornerRadius(10)
                                 }
+                                .buttonStyle(PlainButtonStyle())
                                 .padding(.horizontal)
                             }
                         }

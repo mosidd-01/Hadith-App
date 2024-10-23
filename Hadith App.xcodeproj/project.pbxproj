@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		292D36052CC889F3007487AE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 292D36042CC889F3007487AE /* SQLite */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		29054AF92CC49DCB00F11B2B /* Hadith App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hadith App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				292D36052CC889F3007487AE /* SQLite in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = "Hadith App";
 			packageProductDependencies = (
+				292D36042CC889F3007487AE /* SQLite */,
 			);
 			productName = "Hadith App";
 			productReference = 29054AF92CC49DCB00F11B2B /* Hadith App.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = 29054AF02CC49DCB00F11B2B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				292D36032CC889F3007487AE /* XCRemoteSwiftPackageReference "SQLite" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 29054AFA2CC49DCB00F11B2B /* Products */;
 			projectDirPath = "";
@@ -322,6 +331,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		292D36032CC889F3007487AE /* XCRemoteSwiftPackageReference "SQLite" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stephencelis/SQLite.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		292D36042CC889F3007487AE /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 292D36032CC889F3007487AE /* XCRemoteSwiftPackageReference "SQLite" */;
+			productName = SQLite;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 29054AF12CC49DCB00F11B2B /* Project object */;
 }

@@ -52,7 +52,7 @@ struct ChapterView: SwiftUI.View {
                         .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                 } else {
                     ScrollView {
-                        VStack(spacing: 12) {
+                        LazyVStack(spacing: 12) {
                             ForEach(chapters, id: \.number) { chapter in
                                 NavigationLink(destination: HadithsView(
                                     bookName: bookName,

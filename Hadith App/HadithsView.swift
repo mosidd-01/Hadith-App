@@ -14,9 +14,13 @@ struct HadithsView: SwiftUI.View {
     let chapterNumber: String
     let hadithRange: String
     
-    @State private var hadiths: [(id: String, number: String, textArabic: String, textEnglish: String)] = []
+    @State private var hadiths: [(id: String, number: String, textArabic: String, textEnglish: String, chainIndx: String)] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    
+    // Add state for saved hadiths
+    @AppStorage("savedHadiths") private var savedHadithsData: Data = Data()
+    @State private var savedHadiths: Set<String> = []
     
     var body: some SwiftUI.View {
         ZStack {
@@ -55,15 +59,50 @@ struct HadithsView: SwiftUI.View {
                                         .background(Color(red: 187/255, green: 187/255, blue: 187/255))
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("\(bookName.trimmingCharacters(in: .whitespaces)), \(hadith.number)")  // Add 1 to the ID
+                                        Text("\(bookName.trimmingCharacters(in: .whitespaces)), \(String(Int(hadith.id)! + 1))")
                                             .font(.caption)
                                             .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                        Text("In-Book Reference: Book \(chapterNumber), Hadith \(String(Int(hadith.id)! + 1))")
+                                        Text("In-Book Reference: Book \(chapterNumber), Hadith \(hadith.number)")
                                             .font(.caption)
                                             .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                     }
+                                    
+                                    HStack(spacing: 20) {
+                                        Button(action: {
+                                            toggleSaveHadith(id: hadith.id)
+                                        }) {
+                                            HStack {
+                                                Image(systemName: savedHadiths.contains(hadith.id) ? "bookmark.fill" : "bookmark")
+                                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                                Text("Save")
+                                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                                    .font(.caption)
+                                            }
+                                            .padding(.vertical, 8)
+                                        }
+                                        
+                                        NavigationLink(
+                                            destination: ChainView(
+                                                bookName: bookName,
+                                                hadithID: hadith.id,
+                                                chainIndx: hadith.chainIndx // Pass the chain index here
+                                            )
+                                        ) {
+                                            HStack {
+                                                Image(systemName: "link")
+                                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                                Text("Chain")
+                                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                                    .font(.caption)
+                                            }
+                                            .padding(.vertical, 8)
+                                        }
+                                        
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal)
                                 }
-                                .padding()
+                                .padding() // Add padding to the VStack
                                 .background(
                                     LinearGradient(gradient: Gradient(colors: [
                                         Color(red: 0x01/255, green: 0x26/255, blue: 0x77/255),
@@ -71,7 +110,8 @@ struct HadithsView: SwiftUI.View {
                                     ]), startPoint: .leading, endPoint: .trailing)
                                 )
                                 .cornerRadius(10)
-                                .padding(.horizontal)
+                                .padding(.horizontal) // Add horizontal padding to the VStack
+                                .frame(maxWidth: 600) // Set a maximum width for the VStack
                             }
                         }
                         .padding(.vertical)
@@ -122,7 +162,8 @@ struct HadithsView: SwiftUI.View {
                     CAST(id AS TEXT) as id,
                     CAST(hadith_no AS TEXT) as hadith_no,
                     text_ar,
-                    text_en
+                    text_en,
+                    chain_indx
                 FROM narrations 
                 WHERE source = ? 
                 AND chapter_no = ?
@@ -133,10 +174,11 @@ struct HadithsView: SwiftUI.View {
             
             let results = try db.prepare(query, bookName, chapterNumber).map { row in
                 (
-                    id: row[0] as! String,      // Now expecting String directly
+                    id: row[0] as! String,
                     number: row[1] as! String,
                     textArabic: row[2] as! String,
-                    textEnglish: row[3] as! String
+                    textEnglish: row[3] as! String,
+                    chainIndx: row[4] as! String // Get the chain index
                 )
             }
             
@@ -151,6 +193,24 @@ struct HadithsView: SwiftUI.View {
                 self.isLoading = false
                 print("Error: \(error.localizedDescription)")
             }
+        }
+    }
+    
+    private func loadSavedHadiths() {
+        if let decoded = try? JSONDecoder().decode(Set<String>.self, from: savedHadithsData) {
+            savedHadiths = decoded
+        }
+    }
+    
+    private func toggleSaveHadith(id: String) {
+        if savedHadiths.contains(id) {
+            savedHadiths.remove(id)
+        } else {
+            savedHadiths.insert(id)
+        }
+        
+        if let encoded = try? JSONEncoder().encode(savedHadiths) {
+            savedHadithsData = encoded
         }
     }
 }

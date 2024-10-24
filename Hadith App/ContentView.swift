@@ -113,8 +113,7 @@ struct ContentView: SwiftUI.View {
             
             // Search Tab
             NavigationView {
-                Text("Search")
-                    .navigationTitle("Search")
+                SearchView()
             }
             .tabItem {
                 Image(systemName: "magnifyingglass")
@@ -124,8 +123,7 @@ struct ContentView: SwiftUI.View {
             
             // Saved Tab
             NavigationView {
-                Text("Saved")
-                    .navigationTitle("Saved")
+                SavedView()
             }
             .tabItem {
                 Image(systemName: "bookmark.fill")
@@ -135,8 +133,7 @@ struct ContentView: SwiftUI.View {
             
             // Random Tab
             NavigationView {
-                Text("Random")
-                    .navigationTitle("Random")
+                RandomView()
             }
             .tabItem {
                 Image(systemName: "shuffle")

@@ -23,7 +23,6 @@ struct HadithsView: SwiftUI.View {
     @State private var savedHadiths: Set<String> = []
     
     @StateObject private var savedManager = SavedHadithsManager()
-    @State private var isSaved = false
     
     var body: some SwiftUI.View {
         ZStack {
@@ -70,45 +69,58 @@ struct HadithsView: SwiftUI.View {
                                             .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                     }
                                     
-                                    Button(action: {
-                                        let hadithId = "\(bookName)_\(hadith.number)"
-                                        savedManager.toggleSaved(hadithId: hadithId)
-                                        isSaved.toggle()
-                                    }) {
-                                        HStack {
-                                            Image(systemName: savedManager.isSaved(hadithId: "\(bookName)_\(hadith.number)") ? "bookmark.fill" : "bookmark")
-                                            Text(savedManager.isSaved(hadithId: "\(bookName)_\(hadith.number)") ? "Saved" : "Save")
+                                    HStack(spacing: 10) {
+                                        // Chain Button
+                                        NavigationLink(
+                                            destination: ChainView(
+                                                bookName: bookName,
+                                                hadithID: hadith.id,
+                                                chainIndx: hadith.chainIndx
+                                            )
+                                        ) {
+                                            HStack {
+                                                Image(systemName: "link")
+                                                Text("Chain")
+                                            }
+                                            .padding(.horizontal, 20)
+                                            .padding(.vertical, 10)
+                                            .background(
+                                                LinearGradient(gradient: Gradient(colors: [
+                                                    Color(red: 0x01/255, green: 0x26/255, blue: 0x77/255),
+                                                    Color(red: 0x02/255, green: 0x47/255, blue: 0xDD/255)
+                                                ]), startPoint: .leading, endPoint: .trailing)
+                                            )
+                                            .foregroundColor(.white)
+                                            .cornerRadius(10)
                                         }
-                                        .padding()
-                                        .frame(maxWidth: .infinity)
-                                        .background(
-                                            LinearGradient(gradient: Gradient(colors: [
-                                                Color(red: 0x01/255, green: 0x26/255, blue: 0x77/255),
-                                                Color(red: 0x02/255, green: 0x47/255, blue: 0xDD/255)
-                                            ]), startPoint: .leading, endPoint: .trailing)
-                                        )
-                                        .foregroundColor(.white)
-                                        .cornerRadius(10)
-                                    }
-                                    
-                                    NavigationLink(
-                                        destination: ChainView(
-                                            bookName: bookName,
-                                            hadithID: hadith.id,
-                                            chainIndx: hadith.chainIndx // Pass the chain index here
-                                        )
-                                    ) {
-                                        HStack {
-                                            Image(systemName: "link")
-                                                .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                            Text("Chain")
-                                                .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                                .font(.caption)
+                                        
+                                        // Save Button
+                                        Button(action: {
+                                            let cleanBookName = bookName.trimmingCharacters(in: .whitespaces)
+                                            let hadithId = "\(cleanBookName)_\(hadith.number.trimmingCharacters(in: .whitespaces))"
+                                            print("Attempting to save hadith with ID: \(hadithId)")
+                                            savedManager.toggleSaved(hadithId: hadithId)
+                                        }) {
+                                            HStack {
+                                                let savedHadithId = "\(bookName.trimmingCharacters(in: .whitespaces))_\(hadith.number.trimmingCharacters(in: .whitespaces))"
+                                                Image(systemName: savedManager.isSaved(hadithId: savedHadithId) ? "bookmark.fill" : "bookmark")
+                                                Text(savedManager.isSaved(hadithId: savedHadithId) ? "Saved" : "Save")
+                                            }
+                                            .padding(.horizontal, 20)
+                                            .padding(.vertical, 10)
+                                            .background(
+                                                LinearGradient(gradient: Gradient(colors: [
+                                                    Color(red: 0x01/255, green: 0x26/255, blue: 0x77/255),
+                                                    Color(red: 0x02/255, green: 0x47/255, blue: 0xDD/255)
+                                                ]), startPoint: .leading, endPoint: .trailing)
+                                            )
+                                            .foregroundColor(.white)
+                                            .cornerRadius(10)
                                         }
-                                        .padding(.vertical, 8)
+                                        
+                                        Spacer() // This pushes the buttons to the left
                                     }
-                                    
-                                    Spacer()
+                                    .padding(.horizontal) // Add some padding to the HStack
                                 }
                                 .padding() // Add padding to the VStack
                                 .background(
@@ -201,24 +213,6 @@ struct HadithsView: SwiftUI.View {
                 self.isLoading = false
                 print("Error: \(error.localizedDescription)")
             }
-        }
-    }
-    
-    private func loadSavedHadiths() {
-        if let decoded = try? JSONDecoder().decode(Set<String>.self, from: savedHadithsData) {
-            savedHadiths = decoded
-        }
-    }
-    
-    private func toggleSaveHadith(id: String) {
-        if savedHadiths.contains(id) {
-            savedHadiths.remove(id)
-        } else {
-            savedHadiths.insert(id)
-        }
-        
-        if let encoded = try? JSONEncoder().encode(savedHadiths) {
-            savedHadithsData = encoded
         }
     }
 }

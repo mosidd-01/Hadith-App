@@ -31,10 +31,29 @@ struct SavedView: SwiftUI.View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 16) {
-                        ForEach(hadiths, id: \.id) { hadith in
+                        ForEach(hadiths.indices, id: \.self) { index in
+                            let hadith = hadiths[index]
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Reference: \(hadith.id) | Hadith \(hadith.number)")
-                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                HStack {
+                                    Text("Reference: \(hadith.id) | Hadith \(hadith.number)")
+                                        .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                    
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        let hadithId = "\(hadith.id)_\(hadith.number)"
+                                        savedManager.toggleSaved(hadithId: hadithId)
+                                        hadiths.remove(at: index)
+                                        
+                                        // If this was the last hadith, trigger empty state
+                                        if hadiths.isEmpty {
+                                            isLoading = false
+                                        }
+                                    }) {
+                                        Image(systemName: "bookmark.fill")
+                                            .foregroundColor(.white)
+                                    }
+                                }
                                 
                                 Text(hadith.textArabic)
                                     .multilineTextAlignment(.trailing)
@@ -76,47 +95,60 @@ struct SavedView: SwiftUI.View {
             let db = try Connection(dbPath)
             var loadedHadiths: [(id: String, number: String, textArabic: String, textEnglish: String, chainIndx: String)] = []
             
-            for savedId in savedManager.savedHadiths {
-                let components = savedId.components(separatedBy: "_")
-                guard components.count == 2 else { continue }
-                
-                let source = components[0]
-                let hadithNo = components[1]
-                
-                let query = """
-                    SELECT 
-                        hadith_no,
-                        text_ar,
-                        text_en,
-                        chain_indx
+            print("Attempting to load saved hadiths with IDs: \(savedManager.savedHadiths)")
+            
+            // Create a single query to fetch all saved hadiths
+            let placeholders = Array(repeating: "?", count: savedManager.savedHadiths.count * 2).joined(separator: ",")
+            let query = """
+                SELECT 
+                    source,
+                    hadith_no,
+                    text_ar,
+                    text_en,
+                    chain_indx
+                FROM narrations
+                WHERE (TRIM(source) || '_' || TRIM(hadith_no)) IN (
+                    SELECT TRIM(source) || '_' || TRIM(hadith_no)
                     FROM narrations
-                    WHERE source = ?
-                    AND hadith_no = ?
-                    LIMIT 1
-                """
+                    WHERE (TRIM(source) || '_' || TRIM(hadith_no)) IN (\(savedManager.savedHadiths.map { _ in "?" }.joined(separator: ",")))
+                )
+                COLLATE NOCASE
+            """
+            
+            let statement = try db.prepare(query)
+            
+            // Bind all saved hadith IDs
+            let bindValues = savedManager.savedHadiths.map { $0 }
+            
+            for row in try statement.bind(bindValues) {
+                let source = row[0] as? String ?? ""
+                let hadithNo = row[1] as? String ?? ""
+                let textAr = row[2] as? String ?? ""
+                let textEn = row[3] as? String ?? ""
+                let chainIndx = row[4] as? String ?? ""
                 
-                let statement = try db.prepare(query)
-                
-                for row in try statement.bind(source, hadithNo) {
-                    loadedHadiths.append((
-                        id: source,
-                        number: row[0] as? String ?? "",
-                        textArabic: row[1] as? String ?? "",
-                        textEnglish: row[2] as? String ?? "",
-                        chainIndx: row[3] as? String ?? ""
-                    ))
-                }
+                let loadedHadith = (
+                    id: source.trimmingCharacters(in: .whitespaces),
+                    number: hadithNo.trimmingCharacters(in: .whitespaces),
+                    textArabic: textAr,
+                    textEnglish: textEn,
+                    chainIndx: chainIndx
+                )
+                print("Loaded hadith: \(loadedHadith.id)_\(loadedHadith.number)")
+                loadedHadiths.append(loadedHadith)
             }
             
             DispatchQueue.main.async {
                 self.hadiths = loadedHadiths
                 self.isLoading = false
+                print("Final loaded hadiths count: \(self.hadiths.count)")
             }
             
         } catch {
             DispatchQueue.main.async {
                 self.errorMessage = "Error loading saved hadiths: \(error.localizedDescription)"
                 self.isLoading = false
+                print("Error loading saved hadiths: \(error)")
             }
         }
     }

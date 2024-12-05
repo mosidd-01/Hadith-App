@@ -6,27 +6,57 @@ class SavedHadithsManager: ObservableObject {
     
     init() {
         loadSavedHadiths()
+        cleanupSavedHadiths()
     }
     
     private func loadSavedHadiths() {
         if let decoded = try? JSONDecoder().decode(Set<String>.self, from: savedHadithsData) {
-            savedHadiths = decoded
+            DispatchQueue.main.async {
+                self.savedHadiths = decoded
+                print("Loaded saved hadiths: \(self.savedHadiths)")
+            }
         }
     }
     
-    func toggleSaved(hadithId: String) {
-        if savedHadiths.contains(hadithId) {
-            savedHadiths.remove(hadithId)
-        } else {
-            savedHadiths.insert(hadithId)
-        }
+    private func cleanupSavedHadiths() {
+        let cleanedIds = savedHadiths.map { standardizeHadithId($0) }
+        savedHadiths = Set(cleanedIds)
+        saveToDisk()
+    }
+    
+    private func standardizeHadithId(_ id: String) -> String {
+        let components = id.components(separatedBy: "_")
+        guard components.count == 2 else { return id }
         
+        let book = components[0].trimmingCharacters(in: .whitespaces)
+        let number = components[1].trimmingCharacters(in: .whitespaces)
+        return "\(book)_\(number)"
+    }
+    
+    func toggleSaved(hadithId: String) {
+        DispatchQueue.main.async {
+            let standardId = self.standardizeHadithId(hadithId)
+            if self.savedHadiths.contains(standardId) {
+                self.savedHadiths.remove(standardId)
+                print("Removed hadith ID: \(standardId)")
+            } else {
+                self.savedHadiths.insert(standardId)
+                print("Added hadith ID: \(standardId)")
+            }
+            
+            self.saveToDisk()
+        }
+    }
+    
+    private func saveToDisk() {
         if let encoded = try? JSONEncoder().encode(savedHadiths) {
             savedHadithsData = encoded
+            print("Saved to disk: \(savedHadiths)")
         }
     }
     
     func isSaved(hadithId: String) -> Bool {
-        return savedHadiths.contains(hadithId)
+        let standardId = standardizeHadithId(hadithId)
+        return savedHadiths.contains(standardId)
     }
 } 

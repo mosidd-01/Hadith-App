@@ -42,6 +42,28 @@ struct ContentView: SwiftUI.View {
             blue: 187/255,
             alpha: 1.0
         )
+        
+        // Create the dark gray color to match background
+        let darkGrayColor = UIColor(
+            red: 40/255,
+            green: 40/255,
+            blue: 40/255,
+            alpha: 1.0
+        )
+        
+        // Configure tab bar appearance
+        let tabBarAppearance = UITabBarAppearance()
+        tabBarAppearance.configureWithOpaqueBackground()
+        tabBarAppearance.backgroundColor = darkGrayColor
+        
+        // Remove the separator line
+        tabBarAppearance.shadowColor = .clear
+        
+        // Apply the appearance settings
+        UITabBar.appearance().standardAppearance = tabBarAppearance
+        if #available(iOS 15.0, *) {
+            UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+        }
     }
 
     var body: some SwiftUI.View {

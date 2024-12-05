@@ -9,6 +9,7 @@ import SwiftUI
 import SQLite
 
 struct Narrator {
+    let scholarIndex: String
     let name: String
     let birthInfo: String
     let deathInfo: String
@@ -40,33 +41,35 @@ struct ChainView: SwiftUI.View {
                         VStack(spacing: 16) {
                             // Reverse the order of narrators
                             ForEach(Array(narrators.reversed().enumerated()), id: \.offset) { index, narrator in
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(narrator.name)
-                                        .font(.headline)
-                                        .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                    
-                                    if !narrator.birthInfo.isEmpty {
-                                        Text("Birth: \(narrator.birthInfo)")
-                                            .font(.subheadline)
+                                NavigationLink(destination: NarratorView(scholarIndex: narrator.scholarIndex)) {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(narrator.name)
+                                            .font(.headline)
                                             .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                        
+                                        if !narrator.birthInfo.isEmpty {
+                                            Text("Birth: \(narrator.birthInfo)")
+                                                .font(.subheadline)
+                                                .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                        }
+                                        
+                                        if !narrator.deathInfo.isEmpty {
+                                            Text("Death: \(narrator.deathInfo)")
+                                                .font(.subheadline)
+                                                .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                        }
                                     }
-                                    
-                                    if !narrator.deathInfo.isEmpty {
-                                        Text("Death: \(narrator.deathInfo)")
-                                            .font(.subheadline)
-                                            .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(
+                                        LinearGradient(gradient: Gradient(colors: [
+                                            Color(red: 0x01/255, green: 0x26/255, blue: 0x77/255),
+                                            Color(red: 0x02/255, green: 0x47/255, blue: 0xDD/255)
+                                        ]), startPoint: .leading, endPoint: .trailing)
+                                    )
+                                    .cornerRadius(10)
+                                    .padding(.horizontal)
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(
-                                    LinearGradient(gradient: Gradient(colors: [
-                                        Color(red: 0x01/255, green: 0x26/255, blue: 0x77/255),
-                                        Color(red: 0x02/255, green: 0x47/255, blue: 0xDD/255)
-                                    ]), startPoint: .leading, endPoint: .trailing)
-                                )
-                                .cornerRadius(10)
-                                .padding(.horizontal)
                             }
                         }
                         .padding(.vertical)
@@ -80,6 +83,8 @@ struct ChainView: SwiftUI.View {
     }
     
     private func loadChain() {
+        print("Loading chain with indices: \(chainIndx)")
+        
         guard let dbPath = Bundle.main.path(forResource: "source", ofType: "db") else {
             self.errorMessage = "Database file not found."
             self.isLoading = false
@@ -91,21 +96,26 @@ struct ChainView: SwiftUI.View {
             
             // Split the chain index into individual scholar indices
             let scholarIndices = chainIndx.split(separator: ",").map { String($0) }
+            print("Split scholar indices: \(scholarIndices)")
             
             // Query narrator information for each scholar index
             var narratorsInfo: [Narrator] = []
             
             for scholarIdx in scholarIndices {
-                let narratorQuery = "SELECT name, birth_date_place, death_date_place FROM narrators WHERE scholar_indx = ?"
-                let statement = try db.prepare(narratorQuery) // Prepare the statement
+                let trimmedIdx = scholarIdx.trimmingCharacters(in: .whitespaces)
+                print("Querying for scholar index: '\(trimmedIdx)'")
                 
-                // Bind the scholar index
-                for row in try statement.bind(scholarIdx.trimmingCharacters(in: .whitespaces)) {
+                let narratorQuery = "SELECT scholar_indx, name, birth_date_place, death_date_place FROM narrators WHERE scholar_indx = ?"
+                let statement = try db.prepare(narratorQuery)
+                
+                for row in try statement.bind(trimmedIdx) {
                     let narrator = Narrator(
-                        name: row[0] as? String ?? "",
-                        birthInfo: row[1] as? String ?? "",
-                        deathInfo: row[2] as? String ?? ""
+                        scholarIndex: row[0] as? String ?? "",
+                        name: row[1] as? String ?? "",
+                        birthInfo: row[2] as? String ?? "",
+                        deathInfo: row[3] as? String ?? ""
                     )
+                    print("Found narrator: \(narrator.name) with index: \(narrator.scholarIndex)")
                     narratorsInfo.append(narrator)
                 }
             }

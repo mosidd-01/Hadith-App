@@ -22,6 +22,9 @@ struct HadithsView: SwiftUI.View {
     @AppStorage("savedHadiths") private var savedHadithsData: Data = Data()
     @State private var savedHadiths: Set<String> = []
     
+    @StateObject private var savedManager = SavedHadithsManager()
+    @State private var isSaved = false
+    
     var body: some SwiftUI.View {
         ZStack {
             Color(red: 40/255, green: 40/255, blue: 40/255)
@@ -36,10 +39,10 @@ struct HadithsView: SwiftUI.View {
                         .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                 } else {
                     ScrollView {
-                        VStack(spacing: 16) {
+                        LazyVStack(spacing: 16) {
                             ForEach(hadiths, id: \.id) { hadith in
                                 VStack(alignment: .leading, spacing: 12) {
-                                    Text("Hadith \(String(Int(hadith.id)! + 1))")  // Add 1 to the ID
+                                    Text("Hadith \(String(Int(hadith.number)!))")  // Add 1 to the ID
                                         .font(.headline)
                                         .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                         .padding(.bottom, 4)
@@ -59,7 +62,7 @@ struct HadithsView: SwiftUI.View {
                                         .background(Color(red: 187/255, green: 187/255, blue: 187/255))
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("\(bookName.trimmingCharacters(in: .whitespaces)), \(String(Int(hadith.id)! + 1))")
+                                        Text("\(bookName.trimmingCharacters(in: .whitespaces)), \(String(Int(hadith.number)!))")
                                             .font(.caption)
                                             .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                         Text("In-Book Reference: Book \(chapterNumber), Hadith \(hadith.number)")
@@ -67,40 +70,45 @@ struct HadithsView: SwiftUI.View {
                                             .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
                                     }
                                     
-                                    HStack(spacing: 20) {
-                                        Button(action: {
-                                            toggleSaveHadith(id: hadith.id)
-                                        }) {
-                                            HStack {
-                                                Image(systemName: savedHadiths.contains(hadith.id) ? "bookmark.fill" : "bookmark")
-                                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                                Text("Save")
-                                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                                    .font(.caption)
-                                            }
-                                            .padding(.vertical, 8)
+                                    Button(action: {
+                                        let hadithId = "\(bookName)_\(hadith.number)"
+                                        savedManager.toggleSaved(hadithId: hadithId)
+                                        isSaved.toggle()
+                                    }) {
+                                        HStack {
+                                            Image(systemName: savedManager.isSaved(hadithId: "\(bookName)_\(hadith.number)") ? "bookmark.fill" : "bookmark")
+                                            Text(savedManager.isSaved(hadithId: "\(bookName)_\(hadith.number)") ? "Saved" : "Save")
                                         }
-                                        
-                                        NavigationLink(
-                                            destination: ChainView(
-                                                bookName: bookName,
-                                                hadithID: hadith.id,
-                                                chainIndx: hadith.chainIndx // Pass the chain index here
-                                            )
-                                        ) {
-                                            HStack {
-                                                Image(systemName: "link")
-                                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                                Text("Chain")
-                                                    .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
-                                                    .font(.caption)
-                                            }
-                                            .padding(.vertical, 8)
-                                        }
-                                        
-                                        Spacer()
+                                        .padding()
+                                        .frame(maxWidth: .infinity)
+                                        .background(
+                                            LinearGradient(gradient: Gradient(colors: [
+                                                Color(red: 0x01/255, green: 0x26/255, blue: 0x77/255),
+                                                Color(red: 0x02/255, green: 0x47/255, blue: 0xDD/255)
+                                            ]), startPoint: .leading, endPoint: .trailing)
+                                        )
+                                        .foregroundColor(.white)
+                                        .cornerRadius(10)
                                     }
-                                    .padding(.horizontal)
+                                    
+                                    NavigationLink(
+                                        destination: ChainView(
+                                            bookName: bookName,
+                                            hadithID: hadith.id,
+                                            chainIndx: hadith.chainIndx // Pass the chain index here
+                                        )
+                                    ) {
+                                        HStack {
+                                            Image(systemName: "link")
+                                                .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                            Text("Chain")
+                                                .foregroundColor(Color(red: 187/255, green: 187/255, blue: 187/255))
+                                                .font(.caption)
+                                        }
+                                        .padding(.vertical, 8)
+                                    }
+                                    
+                                    Spacer()
                                 }
                                 .padding() // Add padding to the VStack
                                 .background(
